@@ -12,7 +12,12 @@ defmt = "0.3.5"
 defmt-rtt = "0.4.0"
 embedded-hal = "0.2.7"
 panic-probe = { version = "0.3.1", features = ["print-defmt"] }
-rp-pico = "0.8.0"
+rp-pico = { version = "0.8.0", features = ["rp2040-e5"] }
+usb-device = { version = "0.3.1", features = ["defmt"] }
+usbd-serial = "0.2.0"
+
+[patch.crates-io]
+rp2040-hal = { git = "https://github.com/rp-rs/rp-hal.git", branch = "main" }
 
 [build-dependencies]
 cc = "1.0.83"
