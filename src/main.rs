@@ -24,8 +24,6 @@ static mut USB_BUS: Option<UsbBusAllocator<UsbBus>> = None;
 /// The USB Serial Device Driver (shared with the interrupt).
 static mut USB_SERIAL: Option<SerialPort<UsbBus>> = None;
 
-use defmt::*;
-use defmt_rtt as _;
 use panic_probe as _;
 
 pub mod cmsis_dap;
@@ -36,8 +34,6 @@ static mut USB_DAP: Option<CmsisDap<UsbBus, 64>> = None;
 
 #[entry]
 fn main() -> ! {
-    println!("Hello, world!");
-
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
@@ -116,7 +112,6 @@ fn main() -> ! {
         delay.delay_ms(500);
         led_pin.set_low().unwrap();
         delay.delay_ms(500);
-        defmt::info!("tick");
     }
 }
 
