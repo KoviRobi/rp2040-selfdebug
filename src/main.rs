@@ -29,6 +29,10 @@ use defmt_rtt as _;
 use panic_probe as _;
 
 pub mod cmsis_dap;
+use cmsis_dap::CmsisDap;
+
+/// The USB CMSIS-DAP Device Driver (shared with the interrupt).
+static mut USB_DAP: Option<CmsisDap<UsbBus, 64>> = None;
 
 #[entry]
 fn main() -> ! {
@@ -74,6 +78,11 @@ fn main() -> ! {
         USB_SERIAL = Some(usb_serial);
     }
 
+    let usb_dap = CmsisDap::new(bus_ref);
+    unsafe {
+        USB_DAP = Some(usb_dap);
+    }
+
     let usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x04b4, 0xf138))
         .strings(&[StringDescriptors::new(LangID::EN_US)
             .manufacturer("KoviRobi")
@@ -116,8 +125,9 @@ fn main() -> ! {
 fn USBCTRL_IRQ() {
     let usb_dev = unsafe { USB_DEVICE.as_mut().unwrap() };
     let serial = unsafe { USB_SERIAL.as_mut().unwrap() };
+    let dap = unsafe { USB_DAP.as_mut().unwrap() };
 
-    if usb_dev.poll(&mut [serial]) {
+    if usb_dev.poll(&mut [serial, dap]) {
         let mut buf = [0u8; 64];
 
         match serial.read(&mut buf) {
@@ -133,6 +143,20 @@ fn USBCTRL_IRQ() {
                         bsp::hal::rom_data::reset_to_usb_boot(1 << 25, 0);
                     }
                 }
+            }
+        }
+
+        match dap.read(&mut buf) {
+            Err(_e) => {
+                // Do nothing
+            }
+            Ok(0) => {
+                // Do nothing
+            }
+            Ok(_) => {
+                let mut out = [0; 64];
+                let (_in_size, out_size) = cmsis_dap::dap_execute_command(&buf, &mut out);
+                let _ = dap.write(&out[..out_size as usize]);
             }
         }
     }
