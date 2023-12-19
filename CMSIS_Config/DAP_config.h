@@ -51,6 +51,8 @@ This information includes:
 #include <hardware/structs/resets.h>
 #include <hardware/regs/syscfg.h>
 #include <hardware/structs/syscfg.h>
+#include <hardware/regs/timer.h>
+#include <hardware/structs/timer.h>
 
 /// Processor Clock of the Cortex-M MCU used in the Debug Unit.
 /// This value is used to calculate the SWD/JTAG clock speed.
@@ -120,7 +122,7 @@ This information includes:
 #define SWO_STREAM              0               ///< SWO Streaming Trace: 1 = available, 0 = not available.
 
 /// Clock frequency of the Test Domain Timer. Timer value is returned with \ref TIMESTAMP_GET.
-#define TIMESTAMP_CLOCK         0U              ///< Timestamp clock in Hz (0 = timestamps not supported).
+#define TIMESTAMP_CLOCK         (1000U*1000U)   ///< Timestamp clock in Hz (0 = timestamps not supported).
 
 /// Indicate that UART Communication Port is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
@@ -550,7 +552,7 @@ default, the DWT timer is used.  The frequency of this timer is configured with 
 */
 __STATIC_INLINE uint32_t TIMESTAMP_GET (void) {
 #if TIMESTAMP_CLOCK > 0
-  return (DWT->CYCCNT);
+  return timer_hw->timerawl;
 #else
   return 0;
 #endif
