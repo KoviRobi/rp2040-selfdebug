@@ -1,14 +1,21 @@
 #![no_std]
 #![no_main]
 
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::ToggleableOutputPin;
 
 use rp_pico as bsp;
 
 use bsp::entry;
 use bsp::hal::pac::interrupt;
 use bsp::hal::prelude::*;
-use bsp::hal::{clocks::init_clocks_and_plls, pac, usb::UsbBus, watchdog::Watchdog, Sio};
+use bsp::hal::{
+    clocks::init_clocks_and_plls,
+    multicore::{Multicore, Stack},
+    pac,
+    usb::UsbBus,
+    watchdog::Watchdog,
+    Sio,
+};
 
 use bsp::hal::fugit::ExtU32;
 use embedded_hal::watchdog::{Watchdog as _, WatchdogEnable as _};
@@ -35,6 +42,11 @@ use cmsis_dap::CmsisDap;
 /// The USB CMSIS-DAP Device Driver (shared with the interrupt).
 static mut USB_DAP: Option<CmsisDap<UsbBus, 64>> = None;
 
+/// The core 0 multi-core FIFO/mailbox (shared with the USB interrupt)
+static mut CORE0_FIFO: Option<bsp::hal::sio::SioFifo> = None;
+
+static mut CORE1_STACK: Stack<4096> = Stack::new();
+
 #[entry]
 fn main() -> ! {
     let mut pac = pac::Peripherals::take().unwrap();
@@ -52,15 +64,29 @@ fn main() -> ! {
     .ok()
     .unwrap();
 
+    let sys_freq = clocks.system_clock.freq().to_Hz();
+
     watchdog.start(5.secs());
 
-    let sio = Sio::new(pac.SIO);
-    let pins = rp_pico::Pins::new(
+    let mut sio = Sio::new(pac.SIO);
+
+    let pins = bsp::hal::gpio::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
         sio.gpio_bank0,
         &mut pac.RESETS,
     );
+
+    let mut mc = Multicore::new(&mut pac.PSM, &mut pac.PPB, &mut sio.fifo);
+    let cores = mc.cores();
+    let core1 = &mut cores[1];
+    let _task = core1.spawn(unsafe { &mut CORE1_STACK.mem }, move || {
+        core1_task(sys_freq, pins);
+    });
+
+    unsafe {
+        CORE0_FIFO = Some(sio.fifo);
+    }
 
     let usb_bus = UsbBusAllocator::new(UsbBus::new(
         pac.USBCTRL_REGS,
@@ -106,18 +132,28 @@ fn main() -> ! {
     unsafe {
         pac::NVIC::unmask(bsp::hal::pac::Interrupt::USBCTRL_IRQ);
     };
-    // No more USB code after this point in main! We can do anything we want in here since USB is
-    // handled in the interrupt - let's blink an LED!
 
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
-    let mut led_pin = pins.led.into_push_pull_output();
 
     loop {
-        led_pin.set_high().unwrap();
-        delay.delay_ms(500);
-        led_pin.set_low().unwrap();
-        delay.delay_ms(500);
+        delay.delay_ms(1000);
         watchdog.feed();
+    }
+}
+
+fn core1_task(sys_freq: u32, pins: bsp::hal::gpio::Pins) -> ! {
+    let pac = unsafe { pac::Peripherals::steal() };
+    let core = unsafe { pac::CorePeripherals::steal() };
+
+    let mut sio = Sio::new(pac.SIO);
+    let mut led_pin = pins.gpio25.into_push_pull_output();
+    let mut delay = cortex_m::delay::Delay::new(core.SYST, sys_freq);
+    loop {
+        if sio.fifo.is_write_ready() {
+            sio.fifo.write(b'a' as u32);
+        }
+        delay.delay_ms(500);
+        led_pin.toggle().unwrap();
     }
 }
 
@@ -127,6 +163,17 @@ fn USBCTRL_IRQ() {
     let usb_dev = unsafe { USB_DEVICE.as_mut().unwrap() };
     let serial = unsafe { USB_SERIAL.as_mut().unwrap() };
     let dap = unsafe { USB_DAP.as_mut().unwrap() };
+    let fifo = unsafe { CORE0_FIFO.as_mut().unwrap() };
+
+    if fifo.is_read_ready() {
+        let _ = serial.write(b"Fifo: ");
+        while let Some(data) = fifo.read() {
+            let b = [data as u8];
+            let _ = serial.write(&b);
+        }
+        let _ = serial.write(b"\r\n");
+    }
+    let _ = serial.flush();
 
     if usb_dev.poll(&mut [serial, dap]) {
         let mut buf = [0u8; 64];
