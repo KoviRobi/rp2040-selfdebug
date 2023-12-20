@@ -10,6 +10,9 @@ use bsp::hal::pac::interrupt;
 use bsp::hal::prelude::*;
 use bsp::hal::{clocks::init_clocks_and_plls, pac, usb::UsbBus, watchdog::Watchdog, Sio};
 
+use bsp::hal::fugit::ExtU32;
+use embedded_hal::watchdog::{Watchdog as _, WatchdogEnable as _};
+
 // USB Device support
 use usb_device::class_prelude::UsbBusAllocator;
 use usb_device::prelude::*;
@@ -48,6 +51,8 @@ fn main() -> ! {
     )
     .ok()
     .unwrap();
+
+    watchdog.start(5.secs());
 
     let sio = Sio::new(pac.SIO);
     let pins = rp_pico::Pins::new(
@@ -112,6 +117,7 @@ fn main() -> ! {
         delay.delay_ms(500);
         led_pin.set_low().unwrap();
         delay.delay_ms(500);
+        watchdog.feed();
     }
 }
 
