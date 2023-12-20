@@ -111,15 +111,12 @@ fn main() -> ! {
     }
 
     let usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x04b4, 0xf138))
-        .strings(&[StringDescriptors::new(LangID::EN_US)
-            .manufacturer("KoviRobi")
-            .product("CMSIS-DAP")
-            .serial_number("Test")])
-        .unwrap()
+        .manufacturer("KoviRobi")
+        .product("CMSIS-DAP")
+        .serial_number("Test")
         .device_class(2)
         .composite_with_iads()
         .max_packet_size_0(64)
-        .unwrap()
         .build();
 
     unsafe {

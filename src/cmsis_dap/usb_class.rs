@@ -52,7 +52,7 @@ impl<B: UsbBus, const MAX_PACKET_SIZE: usize> usb_device::class::UsbClass<B>
         Ok(())
     }
 
-    fn get_string(&self, index: StringIndex, lang_id: LangID) -> Option<&str> {
+    fn get_string(&self, index: StringIndex, lang_id: u16) -> Option<&str> {
         let _ = lang_id;
         if index == self.serial_string {
             Some("CMSIS-DAP interface")
