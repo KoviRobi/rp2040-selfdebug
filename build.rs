@@ -8,6 +8,7 @@
 //! updating `memory.x` ensures a rebuild of the application with the
 //! new memory settings.
 
+use cc;
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -28,4 +29,28 @@ fn main() {
     // here, we ensure the build script is only re-run when
     // `memory.x` is changed.
     println!("cargo:rerun-if-changed=memory.x");
+
+    // Compile the CMSIS DAP code
+    let includes = [
+        "CMSIS_5/CMSIS/Core/Include/",
+        "CMSIS_5/CMSIS/DAP/Firmware/Include/",
+        "CMSIS_Config/",
+        "pico-sdk/src/common/pico_base/include/",
+        "pico-sdk/src/rp2_common/pico_platform/include/",
+        "pico-sdk/src/rp2_common/hardware_base/include/",
+        "pico-sdk/src/rp2040/hardware_regs/include/",
+        "pico-sdk/src/rp2040/hardware_structs/include/",
+    ];
+    println!("cargo:rerun-if-changed=CMSIS_5/CMSIS/DAP/Firmware/Source/DAP.c");
+    for dir in includes {
+        println!("cargo:rerun-if-changed={dir}");
+    }
+    cc::Build::new()
+        .compiler("arm-none-eabi-gcc")
+        .file("CMSIS_5/CMSIS/DAP/Firmware/Source/DAP.c")
+        .file("CMSIS_5/CMSIS/DAP/Firmware/Source/SW_DP.c")
+        .includes(includes)
+        .compile("cmsis_dap");
+
+    println!("cargo:rustc-link-lib=cmsis_dap");
 }
