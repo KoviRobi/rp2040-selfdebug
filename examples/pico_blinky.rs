@@ -36,8 +36,7 @@ static mut USB_SERIAL: Option<SerialPort<UsbBus>> = None;
 
 use panic_probe as _;
 
-pub mod cmsis_dap;
-use cmsis_dap::CmsisDap;
+use rp_selfdebug::{dap_execute_command, dap_setup, CmsisDap};
 
 /// The USB CMSIS-DAP Device Driver (shared with the interrupt).
 static mut USB_DAP: Option<CmsisDap<UsbBus, 64>> = None;
@@ -123,7 +122,7 @@ fn main() -> ! {
         USB_DEVICE = Some(usb_dev);
     };
 
-    cmsis_dap::dap_setup(&pac.SYSCFG.dbgforce);
+    dap_setup(&pac.SYSCFG.dbgforce);
 
     // Enable the USB interrupt
     unsafe {
@@ -200,7 +199,7 @@ fn USBCTRL_IRQ() {
             }
             Ok(_) => {
                 let mut out = [0; 64];
-                let (_in_size, out_size) = cmsis_dap::dap_execute_command(&buf, &mut out);
+                let (_in_size, out_size) = dap_execute_command(&buf, &mut out);
                 let _ = dap.write(&out[..out_size as usize]);
             }
         }
