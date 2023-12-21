@@ -27,3 +27,12 @@ just propagating `Result` out using `?` in the `process` method.
 [pico-debug]: https://github.com/majbthrd/pico-debug
 [picoprobe]: https://github.com/majbthrd/pico-debug
 [rust-dap]: https://github.com/ciniml/rust-dap
+
+## Configuring
+I couldn't figure out a good way to make the configuration in
+[CMSIS_Config/DAP_config.h](CMSIS_Config/DAP_config.h) parameterized over
+integers (rather than just a couple of feature flags), so feel free to just
+use this library as a reference/inspiration to copy from rather than using it
+as a library via cargo, if you need to change frequencies etc. Maybe link back to
+here so it's easier for others to figure out how to do the same for their code
+base, but I don't mind and am definitely not the first to do this anyway.
