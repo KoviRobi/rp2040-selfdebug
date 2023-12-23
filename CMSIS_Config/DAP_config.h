@@ -54,9 +54,10 @@ This information includes:
 #include <hardware/regs/timer.h>
 #include <hardware/structs/timer.h>
 
-/// Processor Clock of the Cortex-M MCU used in the Debug Unit.
-/// This value is used to calculate the SWD/JTAG clock speed.
-#define CPU_CLOCK               (120U*1000U*1000U)      ///< Specifies the CPU Clock in Hz.
+// /// Processor Clock of the Cortex-M MCU used in the Debug Unit.
+// /// This value is used to calculate the SWD/JTAG clock speed.
+// #define CPU_CLOCK               (120U*1000U*1000U)      ///< Specifies the CPU Clock in Hz.
+// Defined via cargo cfg
 
 /// Number of processor cycles for I/O Port write operations.
 /// This value is used to calculate the SWD/JTAG clock speed that is generated with I/O
@@ -82,11 +83,12 @@ This information includes:
 /// Used for the command \ref DAP_Connect when Port Default mode is selected.
 #define DAP_DEFAULT_PORT        1U              ///< Default JTAG/SWJ Port Mode: 1 = SWD, 2 = JTAG.
 
-/// Default communication speed on the Debug Access Port for SWD and JTAG mode.
-/// Used to initialize the default SWD/JTAG clock frequency.
-/// The command \ref DAP_SWJ_Clock can be used to overwrite this default setting.
-/// RP2040 datasheet says max 24MHz (for SYSCFG we can assume max speed)
-#define DAP_DEFAULT_SWJ_CLOCK   24000000U        ///< Default SWD/JTAG clock frequency in Hz.
+// /// Default communication speed on the Debug Access Port for SWD and JTAG mode.
+// /// Used to initialize the default SWD/JTAG clock frequency.
+// /// The command \ref DAP_SWJ_Clock can be used to overwrite this default setting.
+// /// RP2040 datasheet says max 24MHz (for SYSCFG we can assume max speed)
+// #define DAP_DEFAULT_SWJ_CLOCK   24000000U        ///< Default SWD/JTAG clock frequency in Hz.
+// Defined via cargo cfg
 
 /// Maximum Package Size for Command and Response data.
 /// This configuration settings is used to optimize the communication performance with the
@@ -95,11 +97,12 @@ This information includes:
 /// We are using full-speed USB
 #define DAP_PACKET_SIZE         64U            ///< Specifies Packet Size in bytes.
 
-/// Maximum Package Buffers for Command and Response data.
-/// This configuration settings is used to optimize the communication performance with the
-/// debugger and depends on the USB peripheral. For devices with limited RAM or USB buffer the
-/// setting can be reduced (valid range is 1 .. 255).
-#define DAP_PACKET_COUNT        8U              ///< Specifies number of packets buffered.
+// /// Maximum Package Buffers for Command and Response data.
+// /// This configuration settings is used to optimize the communication performance with the
+// /// debugger and depends on the USB peripheral. For devices with limited RAM or USB buffer the
+// /// setting can be reduced (valid range is 1 .. 255).
+// #define DAP_PACKET_COUNT        8U              ///< Specifies number of packets buffered.
+// Defined via cargo cfg
 
 /// Indicate that UART Serial Wire Output (SWO) trace is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.

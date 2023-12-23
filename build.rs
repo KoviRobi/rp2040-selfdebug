@@ -8,7 +8,6 @@
 //! updating `memory.x` ensures a rebuild of the application with the
 //! new memory settings.
 
-use cc;
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -31,6 +30,55 @@ fn main() {
     println!("cargo:rerun-if-changed=memory.x");
 
     // Compile the CMSIS DAP code
+
+    // - Configuration for the CMSIS DAP library
+    // -- Processor Clock of the Cortex-M MCU used in the Debug Unit.
+    // -- This value is used to calculate the SWD/JTAG clock speed.
+    // -- (Specifies the CPU Clock in Hz.)
+    let cpu_clock = match env::var("CARGO_CFG_CMSIS_DAP_CPU_CLOCK") {
+        Ok(s) => s
+            .parse()
+            .expect("Rustc cfg CMSIS_DAP_CPU_CLOCK cannot be parsed as a u32 integer"),
+        Err(env::VarError::NotPresent) => 120_000_000u32,
+        Err(env::VarError::NotUnicode(os_str)) => {
+            panic!("Rustc cfg CMSIS_DAP_CPU_CLOCK not unicode: {:?}", os_str)
+        }
+    };
+    // -- Default communication speed on the Debug Access Port for SWD and JTAG mode.
+    // -- Used to initialize the default SWD/JTAG clock frequency.
+    // -- The command \ref DAP_SWJ_Clock can be used to overwrite this default setting.
+    // -- RP2040 datasheet says max 24MHz (for SYSCFG we can assume max speed)
+    // -- (Default SWD/JTAG clock frequency in Hz.)
+    let dap_default_swj_clock = match env::var("CARGO_CFG_CMSIS_DAP_DEFAULT_SWJ_CLOCK") {
+        Ok(s) => s
+            .parse()
+            .expect("Rustc cfg CMSIS_DAP_DEFAULT_SWJ_CLOCK cannot be parsed as a u32 integer"),
+        Err(env::VarError::NotPresent) => 24_000_000u32,
+        Err(env::VarError::NotUnicode(os_str)) => {
+            panic!(
+                "Rustc cfg CMSIS_DAP_DEFAULT_SWJ_CLOCK not unicode: {:?}",
+                os_str
+            )
+        }
+    };
+    // -- Maximum Package Buffers for Command and Response data.
+    // -- This configuration settings is used to optimize the communication performance with the
+    // -- debugger and depends on the USB peripheral. For devices with limited RAM or USB buffer the
+    // -- setting can be reduced (valid range is 1 .. 255 inclusive).
+    // -- (Specifies number of packets buffered.)
+    let dap_packet_count = match env::var("CARGO_CFG_CMSIS_DAP_PACKET_COUNT") {
+        Ok(s) => s
+            .parse()
+            .ok()
+            .filter(|n| (1..=255).contains(n))
+            .expect("Rustc cfg CMSIS_DAP_PACKET_COUNT cannot be parsed as a u8 integer in the range 1..=255"),
+        Err(env::VarError::NotPresent) => 8u8,
+        Err(env::VarError::NotUnicode(os_str)) => {
+            panic!("Rustc cfg CMSIS_DAP_PACKET_COUNT not unicode: {:?}", os_str)
+        }
+    };
+
+    // - Change tracking for the CMSIS DAP library
     let includes = [
         "CMSIS_5/CMSIS/Core/Include/",
         "CMSIS_5/CMSIS/DAP/Firmware/Include/",
@@ -45,10 +93,18 @@ fn main() {
     for dir in includes {
         println!("cargo:rerun-if-changed={dir}");
     }
+
+    // - Building the CMSIS DAP library
     cc::Build::new()
         .compiler("arm-none-eabi-gcc")
         .file("CMSIS_5/CMSIS/DAP/Firmware/Source/DAP.c")
         .file("CMSIS_5/CMSIS/DAP/Firmware/Source/SW_DP.c")
+        .define("CPU_CLOCK", cpu_clock.to_string().as_ref())
+        .define(
+            "DAP_DEFAULT_SWJ_CLOCK",
+            dap_default_swj_clock.to_string().as_ref(),
+        )
+        .define("DAP_PACKET_COUNT", dap_packet_count.to_string().as_ref())
         .includes(includes)
         .compile("cmsis_dap");
 

@@ -29,10 +29,22 @@ just propagating `Result` out using `?` in the `process` method.
 [rust-dap]: https://github.com/ciniml/rust-dap
 
 ## Configuring
-I couldn't figure out a good way to make the configuration in
-[CMSIS_Config/DAP_config.h](CMSIS_Config/DAP_config.h) parameterized over
-integers (rather than just a couple of feature flags), so feel free to just
-use this library as a reference/inspiration to copy from rather than using it
-as a library via cargo, if you need to change frequencies etc. Maybe link back to
-here so it's easier for others to figure out how to do the same for their code
-base, but I don't mind and am definitely not the first to do this anyway.
+You can configure the following parameters of CMSIS DAP:
+- `CPU_CLK` (default 120000000 [120MHz])
+- `DAP_DEFAULT_SWJ_CLOCK` (default 24000000 [24MHz])
+- `DAP_PACKET_COUNT` (default 8)
+by editing your `.cargo/config.toml`, to include:
+
+```
+rustflags = [
+  // ...
+  "--cfg", "CMSIS_DAP_CPU_CLOCK=\"120000000\"",
+  "--cfg", "CMSIS_DAP_DEFAULT_SWJ_CLOCK=\"24000000\"",
+  "--cfg", "CMSIS_DAP_PACKET_COUNT=\"8\"",
+  // ...
+]
+```
+
+If you want to configure something else (see the file
+[CMSIS_Config/DAP_config.h](CMSIS_Config/DAP_config.h) for more configuration
+options), feel free to make a PR, or just use this repository as an example.

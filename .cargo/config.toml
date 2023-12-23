@@ -17,6 +17,9 @@ rustflags = [
   # "-Z", "trap-unreachable=no",
   "-C", "inline-threshold=5",
   "-C", "no-vectorize-loops",
+  "--cfg", "CMSIS_DAP_CPU_CLOCK=\"120000000\"",
+  "--cfg", "CMSIS_DAP_DEFAULT_SWJ_CLOCK=\"24000000\"",
+  "--cfg", "CMSIS_DAP_PACKET_COUNT=\"8\"",
 ]
 
 [build]
