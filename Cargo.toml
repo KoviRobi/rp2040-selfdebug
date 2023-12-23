@@ -1,5 +1,5 @@
 [package]
-name = "rp-selfdebug"
+name = "rp2040-selfdebug"
 version = "0.1.0"
 edition = "2021"
 

@@ -278,20 +278,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rp-selfdebug"
-version = "0.1.0"
-dependencies = [
- "cc",
- "cortex-m",
- "cortex-m-rt",
- "embedded-hal",
- "panic-probe",
- "rp-pico",
- "usb-device",
- "usbd-serial",
-]
-
-[[package]]
 name = "rp2040-boot2"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -346,6 +332,20 @@ dependencies = [
  "cortex-m-rt",
  "critical-section",
  "vcell",
+]
+
+[[package]]
+name = "rp2040-selfdebug"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "cortex-m",
+ "cortex-m-rt",
+ "embedded-hal",
+ "panic-probe",
+ "rp-pico",
+ "usb-device",
+ "usbd-serial",
 ]
 
 [[package]]

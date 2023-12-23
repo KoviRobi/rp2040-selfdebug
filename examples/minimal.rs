@@ -19,7 +19,7 @@ static mut USB_BUS: Option<UsbBusAllocator<UsbBus>> = None;
 
 use panic_probe as _;
 
-use rp_selfdebug::{dap_execute_command, dap_setup, CmsisDap};
+use rp2040_selfdebug::{dap_execute_command, dap_setup, CmsisDap};
 
 /// The USB CMSIS-DAP Device Driver (shared with the interrupt).
 static mut USB_DAP: Option<CmsisDap<UsbBus, 64>> = None;
