@@ -48,3 +48,9 @@ rustflags = [
 If you want to configure something else (see the file
 [CMSIS_Config/DAP_config.h](CMSIS_Config/DAP_config.h) for more configuration
 options), feel free to make a PR, or just use this repository as an example.
+
+## TODOs
+- Test flashing core-1 apps. This might require compiling two separate
+  binaries, the CMSIS-DAP one first, and then the core 1 application, linked
+  using the `-R`/`--just-symbols` flag pointing to the CMSIS-DAP application's
+  ELF.
