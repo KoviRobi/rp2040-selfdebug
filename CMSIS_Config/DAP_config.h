@@ -198,8 +198,8 @@ __STATIC_INLINE uint8_t DAP_GetTargetDeviceVendorString (char *str) {
 #if TARGET_FIXED != 0
   uint8_t len;
 
-  strcpy(str, TargetDeviceVendor);
-  len = (uint8_t)(strlen(TargetDeviceVendor) + 1U);
+  len = (uint8_t)sizeof(TargetDeviceVendor);
+  memcpy(str, TargetDeviceVendor, len);
   return (len);
 #else
   (void)str;
@@ -215,8 +215,8 @@ __STATIC_INLINE uint8_t DAP_GetTargetDeviceNameString (char *str) {
 #if TARGET_FIXED != 0
   uint8_t len;
 
-  strcpy(str, TargetDeviceName);
-  len = (uint8_t)(strlen(TargetDeviceName) + 1U);
+  len = (uint8_t)sizeof(TargetDeviceName);
+  memcpy(str, TargetDeviceName, len);
   return (len);
 #else
   (void)str;
@@ -232,8 +232,8 @@ __STATIC_INLINE uint8_t DAP_GetTargetBoardVendorString (char *str) {
 #if TARGET_FIXED != 0
   uint8_t len;
 
-  strcpy(str, TargetBoardVendor);
-  len = (uint8_t)(strlen(TargetBoardVendor) + 1U);
+  len = (uint8_t)sizeof(TargetBoardVendor);
+  memcpy(str, TargetBoardVendor, len);
   return (len);
 #else
   (void)str;
@@ -249,8 +249,8 @@ __STATIC_INLINE uint8_t DAP_GetTargetBoardNameString (char *str) {
 #if TARGET_FIXED != 0
   uint8_t len;
 
-  strcpy(str, TargetBoardName);
-  len = (uint8_t)(strlen(TargetBoardName) + 1U);
+  len = (uint8_t)sizeof(TargetBoardName);
+  memcpy(str, TargetBoardName, len);
   return (len);
 #else
   (void)str;

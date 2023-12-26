@@ -49,6 +49,32 @@ If you want to configure something else (see the file
 [CMSIS_Config/DAP_config.h](CMSIS_Config/DAP_config.h) for more configuration
 options), feel free to make a PR, or just use this repository as an example.
 
+## Known problems
+### `rust-lld: error: undefined symbol: __gnu_thumb1_case_uhi`
+The issue here is that with the `-Os` optimisation GCC is using a "compact
+switch" which requires helper functions/tables
+(https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/core/cortex-m0/thumb_case.S),
+but `libgcc.a` isn't getting linked. To combat this, the `libgcc.a` directory
+is added to the linker search paths (see [build.rs](build.rs)) but you have to
+add `-lgcc` to your linker, e.g. put the following into `.cargo/config.toml`
+
+```diff
+@@ -1,11 +1,12 @@
+ [target.'cfg(all(target_arch = "arm", target_os = "none"))']
+ # runner = "elf2uf2-rs -d"
+ runner = "probe-rs run --chip RP2040 --probe 2E8A:000C"
+
+ rustflags = [
+   "-C", "link-arg=-Tlink.x",
+   "-C", "link-arg=-Tdefmt.x",
++  "-C", "link-args=-lgcc"
+ ]
+
+ [build]
+ target = "thumbv6m-none-eabi"
+```
+
+
 ## TODOs
 - Test flashing core-1 apps. This might require compiling two separate
   binaries, the CMSIS-DAP one first, and then the core 1 application, linked

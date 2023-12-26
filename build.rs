@@ -12,6 +12,7 @@ use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::process::Command;
 
 fn main() {
     // Put `memory.x` in our output directory and ensure it's
@@ -36,9 +37,9 @@ fn main() {
     // -- This value is used to calculate the SWD/JTAG clock speed.
     // -- (Specifies the CPU Clock in Hz.)
     let cpu_clock = match env::var("CARGO_CFG_CMSIS_DAP_CPU_CLOCK") {
-        Ok(s) => s
-            .parse()
-            .expect("Rustc cfg CMSIS_DAP_CPU_CLOCK cannot be parsed as a u32 integer"),
+        Ok(s) => s.parse().expect(
+            "Rustc cfg CMSIS_DAP_CPU_CLOCK cannot be parsed as a u32 integer",
+        ),
         Err(env::VarError::NotPresent) => 120_000_000u32,
         Err(env::VarError::NotUnicode(os_str)) => {
             panic!("Rustc cfg CMSIS_DAP_CPU_CLOCK not unicode: {:?}", os_str)
@@ -95,7 +96,8 @@ fn main() {
     }
 
     // - Building the CMSIS DAP library
-    cc::Build::new()
+    let mut cmsis_dap_build = cc::Build::new();
+    cmsis_dap_build
         .compiler("arm-none-eabi-gcc")
         .file("CMSIS_5/CMSIS/DAP/Firmware/Source/DAP.c")
         .file("CMSIS_5/CMSIS/DAP/Firmware/Source/SW_DP.c")
@@ -105,8 +107,21 @@ fn main() {
             dap_default_swj_clock.to_string().as_ref(),
         )
         .define("DAP_PACKET_COUNT", dap_packet_count.to_string().as_ref())
-        .includes(includes)
-        .compile("cmsis_dap");
+        .includes(includes);
+    cmsis_dap_build.compile("cmsis_dap");
 
-    println!("cargo:rustc-link-lib=cmsis_dap");
+    if cmsis_dap_build.get_compiler().is_like_gnu() {
+        let libgcc_file_name_out =
+            Command::new(cmsis_dap_build.get_compiler().path())
+                .args(["-print-libgcc-file-name"])
+                .output()
+                .unwrap();
+        let libgcc_file_name =
+            String::from_utf8(libgcc_file_name_out.stdout).unwrap();
+        let path = PathBuf::from(&libgcc_file_name);
+        println!(
+            "cargo:rustc-link-search={}",
+            path.parent().unwrap().to_str().unwrap()
+        )
+    }
 }
