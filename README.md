@@ -101,7 +101,63 @@ Breakpoint 1, pico_blinky::core1_task (sys_freq=125000000) at examples/pico_blin
 152             led_pin.toggle().unwrap();
 ```
 
-You can reset to USB flash bootloader, to program, with `picocom --baud 115200 /dev/serial/by-id/usb-KoviRobi_CMSIS-DAP_Test-if00` (or other serial terminal) and then pressing `r`.
+## Reboot to USB boot
+
+In the blinky example, you can reset to USB flash bootloader, to program, with
+
+```sh
+picocom --baud 115200 /dev/serial/by-id/usb-KoviRobi_CMSIS-DAP_Test-if00
+```
+
+(or other serial terminal) and then pressing `r`.
+
+In the minimal example, you have to manually do the reboot to USB boot using
+GDB:
+
+1. Print well-known addresses in the boot ROM (see the rp2040-datasheet 2.8.3
+   Bootrom Contents)
+
+   ```gdb
+   (gdb) x/3hx 0x14
+   0x14 <_well_known>:     0x007a  0x00c4  0x001d
+   ```
+
+2. Find the address of `_reset_to_usb_boot` (see the rp2040-datasheet 2.8.3.1.5
+   Miscellaneous Functions)
+
+   ```gdb
+   (gdb) find /b 0x007a, 0x00c4, 'U', 'B'
+   0x9a <function_table+32>
+   1 pattern found.
+   ```
+
+3. Print the value of the function table
+
+   ```gdb
+   (gdb) x/2hx 0x9a
+   0x9a <function_table+32>:       0x4255  0x2591
+   ```
+
+4. Go to the `_reset_to_usb_boot` function with `gpio_activity_pin_mask` of pin
+   25 (LED on RP2040) and `disable_interface_mask` of zero.
+
+   ```gdb
+   (gdb) p $pc = 0x2591
+   $3 = ()
+   (gdb) p $r0 = 1<<25
+   $4 = ()
+   (gdb) p $r1 = 0
+   $5 = ()
+   (gdb) c
+   Continuing.
+
+   Program stopped.
+   reset_usb_boot (_usb_activity_gpio_pin_mask=33554432,_disable_interface_mask=0) at /home/rmk35/programming/rp2040/pico-bootrom/bootrom/bootrom_main.c:220
+   220         watchdog_hw->scratch[0] = _usb_activity_gpio_pin_mask;
+
+   ```
+
+   (Note, no need to hit continue again.)
 
 ## Configuring
 
