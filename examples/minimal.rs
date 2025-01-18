@@ -5,7 +5,7 @@ use rp_pico as bsp;
 
 use bsp::entry;
 use bsp::hal::pac::interrupt;
-use bsp::hal::{clocks::init_clocks_and_plls, pac, usb::UsbBus, watchdog::Watchdog};
+use bsp::hal::{clocks::init_clocks_and_plls, pac, usb::UsbBus, watchdog::Watchdog, Sio};
 
 // USB Device support
 use usb_device::class_prelude::UsbBusAllocator;
@@ -39,6 +39,16 @@ fn main() -> ! {
     )
     .ok()
     .unwrap();
+
+    let sio = Sio::new(pac.SIO);
+
+    // Need IO bank 0 out of reset for USB
+    bsp::hal::gpio::Pins::new(
+        pac.IO_BANK0,
+        pac.PADS_BANK0,
+        sio.gpio_bank0,
+        &mut pac.RESETS,
+    );
 
     let usb_bus = UsbBusAllocator::new(UsbBus::new(
         pac.USBCTRL_REGS,
