@@ -36,6 +36,9 @@
           pkgs.bear
           # For language server for the C files
           pkgs.ccls
+          pkgs.openocd-rp2040
+          pkgs.picotool
+          pkgs.inetutils # for telnet
         ];
       };
     };
